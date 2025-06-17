@@ -1,0 +1,7 @@
+*.env
+storage/
+assets/
+volumes/
+.idea/
+.vscode/
+uploads/

@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Quản lý Người dùng và Tài liệu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Navigation */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-link {
+            color: #333;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            margin-bottom: 2rem;
+        }
+        
+        .auth-card {
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-area:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .file-upload-area.dragover {
+            border-color: #764ba2;
+            background: rgba(118, 75, 162, 0.05);
+        }
+        
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            background: white;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content-large {
+            max-width: 800px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .badge-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        /* Progress Bar */
+        .progress {
+            background: #e9ecef;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Document Item */
+        .document-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            background: white;
+        }
+        
+        .document-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .document-icon {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .document-details h4 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .document-details p {
+            margin: 0.25rem 0 0 0;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+        
+        .document-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        /* Signature Info */
+        .signature-info {
+            background: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .document-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .document-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+        
+        /* Utility classes */
+        .text-center { text-align: center; }
+        .mb-3 { margin-bottom: 1rem; }
+        .mt-3 { margin-top: 1rem; }
+        .hidden { display: none; }
+        .flex { display: flex; }
+        .justify-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: 0.5rem; }
+        
+        /* Page specific styles */
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar" style="display: none;">
+        <div class="nav-content">
+            <div class="logo">DocMS</div>
+            <div class="nav-links">
+                <a href="#" class="nav-link" onclick="showPage('dashboard')">Dashboard</a>
+                <a href="#" class="nav-link" onclick="showPage('documents')">Tài liệu</a>
+                <a href="#" class="nav-link" onclick="showPage('profile')">Hồ sơ</a>
+                <a href="#" class="nav-link" id="admin-link" onclick="showPage('users')" style="display: none;">Quản lý User</a>
+                <a href="#" class="nav-link" onclick="logout()">Đăng xuất</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Login Page -->
+        <div id="login-page" class="page active">
+            <div class="card auth-card">
+                <h2 class="text-center mb-3">Đăng nhập</h2>
+                <div id="login-alert"></div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mật khẩu</label>
+                        <input type="password" class="form-input" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Đăng nhập</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="#" onclick="showPage('register')">Chưa có tài khoản? Đăng ký</a><br>
+                    <a href="#" onclick="showPage('forgot-password')">Quên mật khẩu?</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Page -->
+        <div id="register-page" class="page">
+            <div class="card auth-card">
+                <h2 class="text-center mb-3">Đăng ký</h2>
+                <div id="register-alert"></div>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label class="form-label">Họ tên</label>
+                        <input type="text" class="form-input" id="register-fullname" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mật khẩu</label>
+                        <input type="password" class="form-input" id="register-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Xác nhận mật khẩu</label>
+                        <input type="password" class="form-input" id="register-confirm-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Đăng ký</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="#" onclick="showPage('login')">Đã có tài khoản? Đăng nhập</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forgot Password Page -->
+        <div id="forgot-password-page" class="page">
+            <div class="card auth-card">
+                <h2 class="text-center mb-3">Quên mật khẩu</h2>
+                <div id="forgot-password-alert"></div>
+                <form id="forgot-password-form">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="forgot-email" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Gửi yêu cầu</button>
+                </form>
+                <div class="text-center mt-3">
+                    <a href="#" onclick="showPage('login')">Quay lại đăng nhập</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboard-page" class="page">
+            <div class="card">
+                <h2 class="mb-3">Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-documents">0</div>
+                        <div class="stat-label">Tổng số tài liệu</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="signed-documents">0</div>
+                        <div class="stat-label">Tài liệu đã ký</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-signatures">0</div>
+                        <div class="stat-label">Tổng chữ ký</div>
+                    </div>
+                    <div class="stat-card" id="admin-stats" style="display: none;">
+                        <div class="stat-number" id="total-users">0</div>
+                        <div class="stat-label">Tổng số người dùng</div>
+                    </div>
+                </div>
+                <div class="alert alert-info">
+                    <strong>Chào mừng!</strong> Bạn đã đăng nhập thành công vào hệ thống quản lý tài liệu và chữ ký số.
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents Page -->
+        <div id="documents-page" class="page">
+            <div class="card">
+                <div class="flex justify-between items-center mb-3">
+                    <h2>Quản lý Tài liệu</h2>
+                    <div class="flex gap-2">
+                    <button class="btn btn-success" onclick="openUploadModal()">Upload Tài liệu</button>
+                    <button class="btn btn-secondary" onclick="loadDocuments()">Làm mới</button>
+    <button class="btn btn-info" onclick="openVerifyModal()">Xác minh chữ ký</button>
+</div>
+                </div>
+                <div id="documents-alert"></div>
+                <div id="documents-list">
+                    <!-- Documents will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profile-page" class="page">
+            <div class="card">
+                <h2 class="mb-3">Thông tin cá nhân</h2>
+                <div id="profile-alert"></div>
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="profile-email" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Họ tên</label>
+                        <input type="text" class="form-input" id="profile-fullname" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vai trò</label>
+                        <input type="text" class="form-input" id="profile-role" readonly>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="btn btn-primary">Cập nhật thông tin</button>
+                        <button type="button" class="btn btn-secondary" onclick="openChangePasswordModal()">Đổi mật khẩu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Users Page (Admin only) -->
+        <div id="users-page" class="page">
+            <div class="card">
+                <div class="flex justify-between items-center mb-3">
+                    <h2>Quản lý người dùng</h2>
+                    <button class="btn btn-success" onclick="loadUsersList()">Làm mới</button>
+                </div>
+                <div id="users-alert"></div>
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Vai trò</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Document Modal -->
+    <div id="upload-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeUploadModal()">&times;</span>
+            <h3 class="mb-3">Upload Tài liệu</h3>
+            <div id="upload-alert"></div>
+            <form id="upload-form">
+                <div class="form-group">
+                    <label class="form-label">Chọn tài liệu</label>
+                    <div class="file-upload-area" id="file-upload-area">
+                        <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                        <div id="upload-text">
+                            <p><strong>Kéo thả file vào đây hoặc click để chọn</strong></p>
+                            <p>Hỗ trợ: PDF, DOC, DOCX, TXT</p>
+                        </div>
+                        <div id="file-info" style="display: none;"></div>
+                    </div>
+                </div>
+                <div id="upload-progress" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                    <p id="progress-text">Đang upload...</p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary" id="upload-btn">Upload</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Document Details Modal -->
+    <div id="document-modal" class="modal">
+        <div class="modal-content modal-content-large">
+            <span class="close" onclick="closeDocumentModal()">&times;</span>
+            <div id="document-modal-content">
+                <!-- Document details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Verify Signature Modal -->
+    <div id="verify-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeVerifyModal()">&times;</span>
+            <h3 class="mb-3">Xác minh chữ ký tài liệu</h3>
+            <div id="verify-alert"></div>
+            <form id="verify-form">
+                
+                <div class="form-group">
+                    <label class="form-label">Chọn file đã ký (.signed)</label>
+                    <input type="file" id="verify-file-input" accept=".signed,.pdf,.doc,.docx,.txt">
+                    <div id="verify-file-info" style="display: none;"></div>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">Xác minh</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeVerifyModal()">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeChangePasswordModal()">&times;</span>
+            <h3 class="mb-3">Đổi mật khẩu</h3>
+            <div id="change-password-alert"></div>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label class="form-label">Mật khẩu cũ</label>
+                    <input type="password" class="form-input" id="old-password" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mật khẩu mới</label>
+                    <input type="password" class="form-input" id="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Xác nhận mật khẩu mới</label>
+                    <input type="password" class="form-input" id="confirm-new-password" required>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">Đổi mật khẩu</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:8888/api';
+        
+        // Global state
+        let currentUser = null;
+        let accessToken = null;
+        let selectedFile = null;
+
+        //lắng nghe sự kiện khi trang được tải
+        document.addEventListener('DOMContentLoaded', () => {
+            const storedUser = localStorage.getItem('currentUser');
+            const storedToken = localStorage.getItem('accessToken');
+
+            if (storedUser && storedToken) {
+                currentUser = JSON.parse(storedUser);
+                accessToken = storedToken;
+                
+                // Show/hide navigation
+                document.getElementById('navbar').style.display = 'block';
+                
+                
+                // Go to dashboard
+                showPage('dashboard');
+            } else {
+                showPage('login');
+            }
+        });
+
+        
+        // Utility functions
+        function showAlert(containerId, message, type = 'error') {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+        
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId + '-page').classList.add('active');
+            
+            // Load page specific data
+            if (pageId === 'dashboard') {
+                loadDashboardData();
+            } else if (pageId === 'profile') {
+                loadProfile();
+            } else if (pageId === 'users') {
+                loadUsersList();
+            } else if (pageId === 'documents') {
+                loadDocuments();
+            }
+        }
+        
+        function setAuthState(user, token) {
+            currentUser = user;
+            accessToken = token;
+
+            // lưu dô localStorage
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            localStorage.setItem('accessToken', token);
+            
+            // Show/hide navigation
+            document.getElementById('navbar').style.display = 'block';
+            
+            // Show/hide admin features
+            if (user.role === 'admin') {
+                document.getElementById('admin-link').style.display = 'block';
+            }
+            
+            // Go to dashboard
+            showPage('dashboard');
+        }
+        
+        function logout() {
+            currentUser = null;
+            accessToken = null;
+            document.getElementById('navbar').style.display = 'none';
+            document.getElementById('admin-link').style.display = 'none';
+            showPage('login');
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString('vi-VN');
+        }
+        
+        // API functions
+        async function apiCall(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const config = {
+                headers: {
+                    ...options.headers
+                },
+                ...options
+            };
+            
+            // Only add Content-Type for non-FormData requests
+            if (!(config.body instanceof FormData)) {
+                config.headers['Content-Type'] = 'application/json';
+            }
+            
+            if (accessToken && !config.headers['Authorization']) {
+                config.headers['Authorization'] = `Bearer ${accessToken}`;
+            }
+            
+            try {
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || data.message || 'Có lỗi xảy ra');
+                }
+                
+                return data;
+            } catch (error) {
+                throw new Error(error.message || 'Lỗi kết nối');
+            }
+        }
+        
+        // Authentication functions
+        async function login(email, password) {
+            const response = await apiCall('/user/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+            
+            setAuthState(response.data.role, response.data.access_token);
+            return response.data;
+        }
+async function register(email, password, fullName) {
+        return await apiCall('/user', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                email, 
+                password, 
+                name: fullName 
+            })
+        });
+    }
+    
+    async function forgotPassword(email) {
+        return await apiCall('/user/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+    }
+    
+    async function changePassword(oldPassword, newPassword) {
+        return await apiCall('/user/change-password', {
+            method: 'POST',
+            body: JSON.stringify({
+                old_password: oldPassword,
+                new_password: newPassword
+            })
+        });
+    }
+    
+    // Profile functions
+    async function getProfile() {
+        return await apiCall('/profile');
+    }
+    
+    async function updateProfile(fullName) {
+        return await apiCall('/profile', {
+            method: 'PUT',
+            body: JSON.stringify({ full_name: fullName })
+        });
+    }
+    
+    // Users functions
+    async function getUsers() {
+        return await apiCall('/');
+    }
+    
+    // Page load functions
+    async function loadDashboardData() {
+        if (currentUser?.role === 'admin') {
+            try {
+                const users = await getUsers();
+                const totalUsers = users.length;
+                const adminCount = users.filter(u => u.role === 'admin').length;
+                const userCount = users.filter(u => u.role === 'user').length;
+                
+                document.getElementById('total-users').textContent = totalUsers;
+                document.getElementById('admin-count').textContent = adminCount;
+                document.getElementById('user-count').textContent = userCount;
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+    }
+    
+    async function loadProfile() {
+        try {
+            const profile = await getProfile();
+            document.getElementById('profile-email').value = profile.email;
+            document.getElementById('profile-fullname').value = profile.full_name;
+            document.getElementById('profile-role').value = profile.role;
+        } catch (error) {
+            showAlert('profile-alert', error.message);
+        }
+    }
+    
+    async function loadUsersList() {
+        if (currentUser?.role !== 'admin') {
+            showAlert('users-alert', 'Bạn không có quyền truy cập trang này');
+            return;
+        }
+        
+        try {
+            const users = await getUsers();
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.full_name}</td>
+                    <td>${user.email}</td>
+                    <td>
+                        <span class="badge ${user.role === 'admin' ? 'badge-danger' : 'badge-primary'}">
+                            ${user.role}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewUser(${user.id})">
+                            Xem chi tiết
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (error) {
+            showAlert('users-alert', error.message);
+        }
+    }
+    
+    function refreshUserList() {
+        loadUsersList();
+    }
+    
+    function viewUser(userId) {
+        // This would open a modal or navigate to user details
+        alert(`Xem chi tiết user ID: ${userId}`);
+    }
+    
+    // Modal functions
+    function openChangePasswordModal() {
+        document.getElementById('change-password-modal').style.display = 'block';
+    }
+    
+    function closeChangePasswordModal() {
+        document.getElementById('change-password-modal').style.display = 'none';
+        document.getElementById('change-password-form').reset();
+        document.getElementById('change-password-alert').innerHTML = '';
+    }
+    
+    // Event listeners
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        
+        try {
+            await login(email, password);
+            showAlert('login-alert', 'Đăng nhập thành công!', 'success');
+        } catch (error) {
+            showAlert('login-alert', error.message);
+        }
+    });
+    
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fullName = document.getElementById('register-fullname').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const confirmPassword = document.getElementById('register-confirm-password').value;
+        
+        if (password !== confirmPassword) {
+            showAlert('register-alert', 'Mật khẩu xác nhận không khớp');
+            return;
+        }
+        
+        try {
+            await register(email, password, fullName);
+            showAlert('register-alert', 'Đăng ký thành công! Vui lòng check email để xác thực tài khoản.', 'success');
+            setTimeout(() => showPage('login'), 2000);
+        } catch (error) {
+            showAlert('register-alert', error.message);
+        }
+    });
+    
+    document.getElementById('forgot-password-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('forgot-email').value;
+        
+        try {
+            await forgotPassword(email);
+            showAlert('forgot-password-alert', 'Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn.', 'success');
+        } catch (error) {
+            showAlert('forgot-password-alert', error.message);
+        }
+    });
+    
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fullName = document.getElementById('profile-fullname').value;
+        
+        try {
+            await updateProfile(fullName);
+            showAlert('profile-alert', 'Cập nhật thông tin thành công!', 'success');
+            currentUser.full_name = fullName;
+        } catch (error) {
+            showAlert('profile-alert', error.message);
+        }
+    });
+    
+    document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const oldPassword = document.getElementById('old-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmNewPassword = document.getElementById('confirm-new-password').value;
+        
+        if (newPassword !== confirmNewPassword) {
+            showAlert('change-password-alert', 'Mật khẩu mới xác nhận không khớp');
+            return;
+        }
+        
+        try {
+            await changePassword(oldPassword, newPassword);
+            showAlert('change-password-alert', 'Đổi mật khẩu thành công!', 'success');
+            setTimeout(closeChangePasswordModal, 2000);
+        } catch (error) {
+            showAlert('change-password-alert', error.message);
+        }
+    });
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('change-password-modal');
+        if (event.target === modal) {
+            closeChangePasswordModal();
+        }
+    }
+    
+
+// ======================= DOCUMENT & SIGNATURE FUNCTIONS =======================
+
+// Upload document
+async function uploadDocument(file) {
+    const formData = new FormData();
+    formData.append('user_id', currentUser.id || currentUser.user_id || currentUser.ID);
+    formData.append('file', file);
+
+    const response = await apiCall('/documents/upload', {
+        method: 'POST',
+        body: formData
+    });
+    return response;
+}
+
+// Get documents of current user
+async function getDocuments() {
+    return await apiCall(`/documents/user`);
+}
+
+// Get document details
+async function getDocumentById(docId) {
+    return await apiCall(`/documents/${docId}`);
+}
+
+// Delete document
+async function deleteDocument(docId) {
+    return await apiCall(`/documents/${docId}`, { method: 'DELETE' });
+}
+
+// Create signature for a document
+async function signDocument(documentId) {
+    return await apiCall('/signatures', {
+        method: 'POST',
+        body: JSON.stringify({
+            document_id: documentId
+        })
+    });
+}
+
+// Get signatures of a document
+async function getSignaturesByDocumentId(docId) {
+    return await apiCall(`/signatures/document/${docId}`);
+}
+
+// ======================= UI & EVENT HANDLERS =======================
+
+// Open verify modal
+function openVerifyModal() {
+    document.getElementById('verify-modal').style.display = 'block';
+    document.getElementById('verify-form').reset();
+    document.getElementById('verify-alert').innerHTML = '';
+    document.getElementById('verify-file-info').style.display = 'none';
+    window.selectedVerifyFile = null;
+}
+
+// Close verify modal
+function closeVerifyModal() {
+    document.getElementById('verify-modal').style.display = 'none';
+    document.getElementById('verify-form').reset();
+    document.getElementById('verify-alert').innerHTML = '';
+    document.getElementById('verify-file-info').style.display = 'none';
+    window.selectedVerifyFile = null;
+}
+
+// Handle verify file input
+function handleVerifyFileInput(e) {
+    if (e.target.files.length > 0) {
+        window.selectedVerifyFile = e.target.files[0];
+        document.getElementById('verify-file-info').style.display = 'block';
+        document.getElementById('verify-file-info').textContent = `${window.selectedVerifyFile.name} (${formatFileSize(window.selectedVerifyFile.size)})`;
+    }
+}
+
+// Handle verify form submit
+async function handleVerifyFormSubmit(e) {
+    e.preventDefault();
+        if (!window.selectedVerifyFile) {
+        showAlert('verify-alert', 'Vui lòng chọn file để xác minh');
+        return;
+    }
+    const formData = new FormData();
+    formData.append('file', window.selectedVerifyFile);
+    try {
+        const response = await apiCall('/documents/verify', {
+            method: 'POST',
+            body: formData
+        });
+        if (response.verified) {
+            showAlert('verify-alert', 'Chữ ký hợp lệ!', 'success');
+        } else {
+            showAlert('verify-alert', response.message || 'Chữ ký không hợp lệ');
+        }
+    } catch (error) {
+        showAlert('verify-alert', error.message);
+    }
+}
+
+// Open upload modal
+function openUploadModal() {
+    document.getElementById('upload-modal').style.display = 'block';
+    document.getElementById('upload-form').reset();
+    document.getElementById('upload-alert').innerHTML = '';
+    selectedFile = null;
+    document.getElementById('file-info').style.display = 'none';
+    document.getElementById('upload-progress').style.display = 'none';
+}
+
+// Close upload modal
+function closeUploadModal() {
+    document.getElementById('upload-modal').style.display = 'none';
+    document.getElementById('upload-form').reset();
+    document.getElementById('upload-alert').innerHTML = '';
+    selectedFile = null;
+    document.getElementById('file-info').style.display = 'none';
+    document.getElementById('upload-progress').style.display = 'none';
+}
+
+// Handle file input
+document.getElementById('file-upload-area').addEventListener('click', () => {
+    document.getElementById('file-input').click();
+});
+document.getElementById('file-input').addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        selectedFile = e.target.files[0];
+        document.getElementById('file-info').style.display = 'block';
+        document.getElementById('file-info').textContent = `${selectedFile.name} (${formatFileSize(selectedFile.size)})`;
+    }
+});
+
+// Handle upload form submit
+document.getElementById('upload-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!selectedFile) {
+        showAlert('upload-alert', 'Vui lòng chọn file để upload');
+        return;
+    }
+    document.getElementById('upload-progress').style.display = 'block';
+    document.getElementById('progress-bar').style.width = '50%';
+    try {
+        await uploadDocument(selectedFile);
+        document.getElementById('progress-bar').style.width = '100%';
+        showAlert('upload-alert', 'Upload thành công!', 'success');
+        setTimeout(() => {
+            closeUploadModal();
+            loadDocuments();
+        }, 1000);
+    } catch (error) {
+        showAlert('upload-alert', error.message);
+        document.getElementById('upload-progress').style.display = 'none';
+    }
+});
+
+// Load documents list
+async function loadDocuments() {
+    try {
+        const docs = await getDocuments();
+        const container = document.getElementById('documents-list');
+        if (!docs || docs.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">Chưa có tài liệu nào.</div>';
+            return;
+        }
+        container.innerHTML = docs.map(doc => `
+    <div class="document-item">
+        <div class="document-info">
+            <div class="document-icon">📄</div>
+            <div class="document-details">
+                <h4>${doc.file_name}</h4>
+                <p>Mã: ${doc.id} | Trạng thái: <span class="badge badge-info">${doc.status}</span></p>
+            </div>
+        </div>
+        <div class="document-actions">
+            <button class="btn btn-sm btn-info" onclick="viewDocument(${doc.id})">Chi tiết</button>
+            <button class="btn btn-sm btn-success" onclick="signDocumentHandler(${doc.id})">Yêu cầu ký</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteDocumentHandler(${doc.id})">Xóa</button>
+        </div>
+    </div>
+`).join('');
+    } catch (error) {
+        showAlert('documents-alert', error.message);
+    }
+}
+
+// View document details and signatures
+async function viewDocument(docId) {
+    try {
+        const doc = await getDocumentById(docId);
+        const sigs = await getSignaturesByDocumentId(docId);
+        let sigHtml = '';
+        if (sigs && sigs.length > 0) {
+            sigHtml = sigs.map(sig => `
+                <div class="signature-info">
+                    <b>Chữ ký số:</b> <span style="word-break:break-all">${sig.signature_raw}</span><br>
+                    <b>Thuật toán:</b> ${sig.algorithm} <br>
+                    <b>Thời gian ký:</b> ${formatDate(sig.signed_at)}
+                </div>
+            `).join('');
+        } else {
+            sigHtml = '<div class="alert alert-warning">Tài liệu chưa được ký.</div>';
+        }
+        document.getElementById('document-modal-content').innerHTML = `
+            <h3>${doc.file_name}</h3>
+            <p><b>Mã tài liệu:</b> ${doc.id}</p>
+            <p><b>Digest:</b> <span style="font-size:0.9em">${doc.digest}</span></p>
+            <p><b>Trạng thái:</b> <span class="badge badge-info">${doc.status}</span></p>
+            <div class="flex gap-2 mb-3">
+                <button class="btn btn-success" onclick="signDocumentHandler(${doc.id})">Ký tài liệu</button>
+                <a class="btn btn-primary" href="${doc.FilePath}.signed" download target="_blank">Tải file đã ký</a>
+            </div>
+            ${sigHtml}
+        `;
+        document.getElementById('document-modal').style.display = 'block';
+    } catch (error) {
+        showAlert('documents-alert', error.message);
+    }
+}
+
+// Close document modal
+function closeDocumentModal() {
+    document.getElementById('document-modal').style.display = 'none';
+    document.getElementById('document-modal-content').innerHTML = '';
+}
+
+// Delete document handler
+async function deleteDocumentHandler(docId) {
+    if (!confirm('Bạn có chắc muốn xóa tài liệu này?')) return;
+    try {
+        await deleteDocument(docId);
+        showAlert('documents-alert', 'Xóa tài liệu thành công!', 'success');
+        loadDocuments();
+    } catch (error) {
+        showAlert('documents-alert', error.message);
+    }
+}
+
+// Sign document handler
+async function signDocumentHandler(docId) {
+    try {
+        await signDocument(docId);
+        showAlert('document-modal-content', 'Ký tài liệu thành công!', 'success');
+        setTimeout(() => {
+            closeDocumentModal();
+            loadDocuments();
+        }, 1000);
+    } catch (error) {
+        showAlert('document-modal-content', error.message);
+    }
+}
+
+// Event for closing document modal
+document.getElementById('document-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeDocumentModal();
+});
+
+// ======================= INIT =======================
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Add more init if needed
+    document.getElementById('verify-file-input').addEventListener('change', handleVerifyFileInput);
+    document.getElementById('verify-form').addEventListener('submit', handleVerifyFormSubmit);
+});
+</script>   
