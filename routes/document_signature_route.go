@@ -33,5 +33,6 @@ func SignatureRoutes(route *gin.Engine, injector *do.Injector) {
 		routes.GET(":id", sigController.GetSignatureByID)
 		routes.GET("/document/:doc_id", sigController.GetSignaturesByDocumentID)
 		routes.DELETE(":id", sigController.DeleteSignature)
+		routes.POST("/sign-string", middleware.Authenticate(jwtService), sigController.SignString)
 	}
 }

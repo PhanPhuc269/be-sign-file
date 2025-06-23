@@ -24,6 +24,7 @@ type SignatureService interface {
 	GetSignaturesByDocumentID(ctx context.Context, docID uint) ([]entity.Signature, error)
 	UpdateSignature(ctx context.Context, sig entity.Signature) (entity.Signature, error)
 	DeleteSignature(ctx context.Context, id uint) error
+	SignString(ctx context.Context, signerID string, raw string) (string, string, error) // signature, publicKey, error
 }
 
 type signatureService struct {
@@ -144,4 +145,27 @@ func (s *signatureService) VerifySignature(ctx context.Context, sig entity.Signa
 		return false, errors.New("signature verification failed")
 	}
 	return true, nil
+}
+
+func (s *signatureService) SignString(ctx context.Context, signerID string, raw string) (string, string, error) {
+	// Sinh private key RSA (demo, không lưu DB)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", errors.New("failed to generate private key")
+	}
+	// Hash chuỗi
+	hash := sha256.Sum256([]byte(raw))
+	// Ký
+	signatureBytes, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hash[:])
+	if err != nil {
+		return "", "", errors.New("failed to sign string")
+	}
+	signature := base64.StdEncoding.EncodeToString(signatureBytes)
+	// Xuất public key PEM
+	pubASN1, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return signature, "", nil // vẫn trả signature
+	}
+	pubPEM := base64.StdEncoding.EncodeToString(pubASN1)
+	return signature, pubPEM, nil
 }

@@ -1,12 +1,8 @@
 package controller
 
 import (
-	"crypto/sha256"
-	"fmt"
 	"net/http"
-	"os"
 	"strconv"
-	"strings"
 
 	"github.com/PhanPhuc2609/be-sign-file/entity"
 	"github.com/PhanPhuc2609/be-sign-file/service"
@@ -99,13 +95,16 @@ func (ctrl *documentController) GetDocumentsByUserID(c *gin.Context) {
 
 // POST /api/documents/verify
 func (ctrl *documentController) UploadAndVerifyDocument(c *gin.Context) {
-
 	userIDVal, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-	userIDStr, _ := userIDVal.(string)
+	userIDStr, ok := userIDVal.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user_id in context"})
+		return
+	}
 
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -113,51 +112,12 @@ func (ctrl *documentController) UploadAndVerifyDocument(c *gin.Context) {
 		return
 	}
 
-	tempPath := "uploads/verify_" + file.Filename
-	if err := c.SaveUploadedFile(file, tempPath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot save file"})
-		return
-	}
-	defer func() { _ = os.Remove(tempPath) }()
-
-	signedContent, err := os.ReadFile(tempPath)
+	verified, message, err := ctrl.service.UploadAndVerifyDocumentService(c.Request.Context(), userIDStr, file)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cannot read uploaded file"})
+		c.JSON(http.StatusOK, gin.H{"verified": false, "message": message, "error": err.Error()})
 		return
 	}
-	parts := strings.Split(string(signedContent), "---BEGIN SIGNATURE---")
-	if len(parts) < 2 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No signature found in file"})
-		return
-	}
-	signedParts := strings.SplitN(parts[1], "---END SIGNATURE---", 2)
-	if len(signedParts) < 1 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No signature end marker in file"})
-		return
-	}
-	sigBase64 := strings.TrimSpace(signedParts[0])
-	originalContent := []byte(parts[0])
-
-	digest := fmt.Sprintf("%x", sha256.Sum256(originalContent))
-
-	// Tìm document theo digest
-	doc, err := ctrl.service.FindDocumentByDigest(c.Request.Context(), digest, userIDStr)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Document not found by digest"})
-		return
-	}
-	sigs, err := ctrl.service.GetSignaturesByDocumentID(c.Request.Context(), doc.ID)
-	if err != nil || len(sigs) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "No signature found for this document"})
-		return
-	}
-
-	ok, err := ctrl.service.VerifySignatureRaw(c.Request.Context(), sigBase64, originalContent, sigs[0])
-	if ok {
-		c.JSON(http.StatusOK, gin.H{"verified": true, "message": "Signature is valid"})
-	} else {
-		c.JSON(http.StatusOK, gin.H{"verified": false, "message": err.Error()})
-	}
+	c.JSON(http.StatusOK, gin.H{"verified": verified, "message": message})
 }
 
 // DELETE /api/documents/:id

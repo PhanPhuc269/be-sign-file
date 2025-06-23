@@ -3,9 +3,15 @@ package service
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"html/template"
+	"math/big"
 	"os"
 	"strings"
 	"time"
@@ -34,6 +40,8 @@ type (
 		Verify(ctx context.Context, req dto.UserLoginRequest) (dto.TokenResponse, error)
 		RefreshToken(ctx context.Context, req dto.RefreshTokenRequest) (dto.TokenResponse, error)
 		RevokeRefreshToken(ctx context.Context, userID string) error
+		CreateUserCertificate(ctx context.Context, userId, userEmail, userName string) (certPEM, privPEM, pubPEM string, err error)
+		IssueUserCertificate(ctx context.Context, userEmail, userName string) (certPEM, privPEM, pubPEM string, err error)
 	}
 
 	userService struct {
@@ -494,4 +502,192 @@ func (s *userService) RevokeRefreshToken(ctx context.Context, userID string) err
 	}
 
 	return nil
+}
+
+func (s *userService) CreateUserCertificate(ctx context.Context, userId, userEmail, userName string) (certPEM, privPEM, pubPEM string, err error) {
+	// 1. Generate RSA key pair
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", "", err
+	}
+	// 2. Create certificate template
+	tmpl := x509.Certificate{
+		SerialNumber: big.NewInt(time.Now().UnixNano()),
+		Subject: pkix.Name{
+			CommonName:   userName,
+			Organization: []string{"VinCSS User"},
+			ExtraNames: []pkix.AttributeTypeAndValue{
+				{Type: []int{1, 2, 840, 113549, 1, 9, 1}, Value: userEmail}, // email OID
+			},
+		},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().AddDate(1, 0, 0), // 1 year
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	// 3. Self-sign (hoặc dùng CA riêng nếu có)
+	certDER, err := x509.CreateCertificate(rand.Reader, &tmpl, &tmpl, &priv.PublicKey, priv)
+	if err != nil {
+		return "", "", "", err
+	}
+	// 4. Encode to PEM
+	certPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER}))
+	privPEM = string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}))
+	pubASN1, _ := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	pubPEM = string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubASN1}))
+
+	// 5. Lưu vào DB
+	user, err := s.userRepo.GetUserById(ctx, nil, userId)
+	if err != nil {
+		return certPEM, privPEM, pubPEM, err
+	}
+	user.CertPEM = certPEM
+	user.PrivPEM = privPEM
+	user.PubPEM = pubPEM
+	_, err = s.userRepo.Update(ctx, nil, user)
+	if err != nil {
+		return certPEM, privPEM, pubPEM, err
+	}
+	return certPEM, privPEM, pubPEM, nil
+}
+
+// IssueUserCertificate: CA cấp chứng chỉ cho user, trả về cert, private key, public key (KHÔNG lưu vào DB)
+func (s *userService) IssueUserCertificate(ctx context.Context, userEmail, userName string) (certPEM, privPEM, pubPEM string, err error) {
+	// 1. Sinh keypair cho user
+	userPriv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", "", err
+	}
+	// 2. Tạo certificate request (CSR) cho user (bỏ qua bước này, tạo trực tiếp cert template)
+	tmpl := x509.Certificate{
+		SerialNumber: big.NewInt(time.Now().UnixNano()),
+		Subject: pkix.Name{
+			CommonName:   userName,
+			Organization: []string{"VinCSS User"},
+			ExtraNames: []pkix.AttributeTypeAndValue{
+				{Type: []int{1, 2, 840, 113549, 1, 9, 1}, Value: userEmail},
+			},
+		},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().AddDate(1, 0, 0),
+		KeyUsage:    x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	// 3. CA key/cert (demo: sinh tạm CA key/cert, thực tế nên lưu CA key/cert riêng)
+	caPriv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", "", err
+	}
+	caTmpl := x509.Certificate{
+		SerialNumber: big.NewInt(time.Now().UnixNano()),
+		Subject: pkix.Name{
+			CommonName: "VinCSS CA",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+	}
+	caCertDER, err := x509.CreateCertificate(rand.Reader, &caTmpl, &caTmpl, &caPriv.PublicKey, caPriv)
+	if err != nil {
+		return "", "", "", err
+	}
+	caCert, err := x509.ParseCertificate(caCertDER)
+	if err != nil {
+		return "", "", "", err
+	}
+	// 4. Ký cert user bằng CA
+	certDER, err := x509.CreateCertificate(rand.Reader, &tmpl, caCert, &userPriv.PublicKey, caPriv)
+	if err != nil {
+		return "", "", "", err
+	}
+	// 5. Encode PEM
+	certPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER}))
+	privPEM = string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(userPriv)}))
+	pubASN1, _ := x509.MarshalPKIXPublicKey(&userPriv.PublicKey)
+	pubPEM = string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubASN1}))
+	return certPEM, privPEM, pubPEM, nil
+}
+
+// IssueCertificateFromCSR: Nhận CSR PEM, CA ký và trả về certificate PEM
+func (s *userService) IssueCertificateFromCSR(ctx context.Context, csrPEM string) (certPEM string, err error) {
+	// 1. Parse CSR
+	block, _ := pem.Decode([]byte(csrPEM))
+	if block == nil || block.Type != "CERTIFICATE REQUEST" {
+		return "", errors.New("invalid CSR PEM")
+	}
+	csr, err := x509.ParseCertificateRequest(block.Bytes)
+	if err != nil {
+		return "", err
+	}
+	if err := csr.CheckSignature(); err != nil {
+		return "", errors.New("CSR signature invalid")
+	}
+	// 2. CA key/cert (demo: sinh tạm CA key/cert, thực tế nên lưu riêng)
+	caPriv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", err
+	}
+	caTmpl := x509.Certificate{
+		SerialNumber:          big.NewInt(time.Now().UnixNano()),
+		Subject:               pkix.Name{CommonName: "VinCSS CA"},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		IsCA:                  true,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
+		BasicConstraintsValid: true,
+	}
+	caCertDER, err := x509.CreateCertificate(rand.Reader, &caTmpl, &caTmpl, &caPriv.PublicKey, caPriv)
+	if err != nil {
+		return "", err
+	}
+	caCert, err := x509.ParseCertificate(caCertDER)
+	if err != nil {
+		return "", err
+	}
+	// 3. Tạo cert cho user từ CSR
+	tmpl := x509.Certificate{
+		SerialNumber: big.NewInt(time.Now().UnixNano()),
+		Subject:      csr.Subject,
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().AddDate(1, 0, 0),
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	certDER, err := x509.CreateCertificate(rand.Reader, &tmpl, caCert, csr.PublicKey, caPriv)
+	if err != nil {
+		return "", err
+	}
+	certPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER}))
+	return certPEM, nil
+}
+
+// GenerateCSRWithPublicKey: Nhận public key, tạo CSR PEM cho user
+func (s *userService) GenerateCSRWithPublicKey(commonName, email string, pubKey *rsa.PublicKey) (csrPEM string, err error) {
+	// 1. Tạo CSR template
+	tmpl := x509.CertificateRequest{
+		Subject: pkix.Name{
+			CommonName:   commonName,
+			Organization: []string{"VinCSS User"},
+		},
+		EmailAddresses: []string{email},
+	}
+	csrDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, nil)
+	if err != nil {
+		return "", err
+	}
+	// Thay thế public key trong CSR bằng pubKey truyền vào
+	csr, err := x509.ParseCertificateRequest(csrDER)
+	if err != nil {
+		return "", err
+	}
+	csr.PublicKey = pubKey
+	// Encode lại CSR với public key mới
+	finalCSRDER, err := x509.CreateCertificateRequest(rand.Reader, &tmpl, nil)
+	if err != nil {
+		return "", err
+	}
+	csrPEM = string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: finalCSRDER}))
+	return csrPEM, nil
 }

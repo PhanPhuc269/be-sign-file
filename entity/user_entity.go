@@ -15,6 +15,9 @@ type User struct {
 	Role       string    `gorm:"type:varchar(50);not null;default:'user'" json:"role" validate:"required,oneof=user admin"`
 	ImageUrl   string    `gorm:"type:varchar(255)" json:"image_url" validate:"omitempty,url"`
 	IsVerified bool      `gorm:"default:false" json:"is_verified"`
+	CertPEM    string    `gorm:"type:text" json:"cert_pem"`
+	PrivPEM    string    `gorm:"type:text" json:"priv_pem"`
+	PubPEM     string    `gorm:"type:text" json:"pub_pem"`
 
 	Timestamp
 }

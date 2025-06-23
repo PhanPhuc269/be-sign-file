@@ -14,6 +14,7 @@ type SignatureController interface {
 	GetSignatureByID(c *gin.Context)
 	GetSignaturesByDocumentID(c *gin.Context)
 	DeleteSignature(c *gin.Context)
+	SignString(c *gin.Context)
 }
 
 type signatureController struct {
@@ -86,4 +87,34 @@ func (ctrl *signatureController) DeleteSignature(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Signature deleted"})
+}
+
+// POST /api/signatures/sign-string
+func (ctrl *signatureController) SignString(c *gin.Context) {
+	userIDVal, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userIDStr, ok := userIDVal.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user_id in context"})
+		return
+	}
+	var req struct {
+		Raw string `json:"raw" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	signature, publicKey, err := ctrl.service.SignString(c.Request.Context(), userIDStr, req.Raw)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"signature":  signature,
+		"public_key": publicKey,
+	})
 }
