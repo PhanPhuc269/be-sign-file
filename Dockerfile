@@ -31,7 +31,8 @@ COPY --from=builder /app/logs.html logs.html
 COPY --from=builder /app/user_management_frontend.html user_management_frontend.html
 # Copy all email templates from builder
 COPY --from=builder /app/utils/email-template/ ./utils/email-template/
+COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8080
 
-CMD ["./main"]
+CMD ["./main", "--migrate", "--seed", "--run"]
